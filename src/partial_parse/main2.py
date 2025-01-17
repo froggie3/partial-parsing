@@ -1,5 +1,6 @@
 import argparse
 import sys
+from collections.abc import Callable
 
 from partial_parse.lib import IParsers, NameParserMixin, get_chains
 
@@ -10,14 +11,9 @@ class Parsers(NameParserMixin, IParsers):
     @property
     def tac_parser(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument("-s", "--separator")
 
         def func(namespace):
-            params = {
-                "name": "tac",
-                "func": lambda s: list(reversed(s)),
-                "separator": namespace.separator,
-            }
+            params = {"name": "tac", "func": lambda s: list(reversed(s))}
             return params
 
         return parser, func
@@ -25,13 +21,39 @@ class Parsers(NameParserMixin, IParsers):
     @property
     def sort_parser(self):
         parser = argparse.ArgumentParser()
+        parser.add_argument("-k", "--key", type=int)
+        parser.add_argument("-n", "--numeric", action="store_true")
         parser.add_argument("-r", "--reverse", action="store_true")
+        parser.add_argument("-t", "--field-separator")
+
+        def sortfunc(
+            reverse: bool, numeric: bool, separator: str | None, key: int | None = None
+        ) -> Callable:
+            if key is None:
+                key = 0
+
+            def key_func(line: str) -> str | int:
+                if separator is None:
+                    return int(line) if numeric else line
+
+                columns = line.split(separator)
+                column = columns[key]
+                return int(column) if numeric else column
+
+            def inner(lines: list[str]):
+                return sorted(lines, key=key_func, reverse=reverse)
+
+            return inner
 
         def func(namespace):
             params = {
                 "name": "sort",
-                "func": lambda lines: sorted(lines),
-                "reverse": namespace.reverse,
+                "func": sortfunc(
+                    namespace.reverse,
+                    namespace.numeric,
+                    namespace.field_separator,
+                    namespace.key,
+                ),
             }
             return params
 

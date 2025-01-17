@@ -10,7 +10,7 @@ class Parsers(NameParserMixin, IParsers):
 
     @property
     def tr_parser(self):
-        parser = argparse.ArgumentParser()
+        parser = argparse.ArgumentParser(prog="tr", add_help=True)
         parser.add_argument("string1")
         parser.add_argument("string2")
 
@@ -31,7 +31,7 @@ class Parsers(NameParserMixin, IParsers):
 
     @property
     def uniq_parser(self):
-        parser = argparse.ArgumentParser()
+        parser = argparse.ArgumentParser(prog="uniq", add_help=True)
         parser.add_argument("-c", "--count", action="store_true")
 
         def uniq_wrapper(is_count: bool) -> Callable:

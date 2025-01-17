@@ -10,7 +10,7 @@ class Parsers(NameParserMixin, IParsers):
 
     @property
     def tac_parser(self):
-        parser = argparse.ArgumentParser()
+        parser = argparse.ArgumentParser(prog="tac", add_help=True)
 
         def func(namespace):
             params = {"name": "tac", "func": lambda s: list(reversed(s))}
@@ -20,7 +20,7 @@ class Parsers(NameParserMixin, IParsers):
 
     @property
     def sort_parser(self):
-        parser = argparse.ArgumentParser()
+        parser = argparse.ArgumentParser(prog="sort", add_help=True)
         parser.add_argument("-k", "--key", type=int)
         parser.add_argument("-n", "--numeric", action="store_true")
         parser.add_argument("-r", "--reverse", action="store_true")

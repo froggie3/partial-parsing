@@ -8,7 +8,11 @@ class NameParserMixin:
 
     @property
     def name_parser(self):
-        parser = argparse.ArgumentParser()
+        parser = argparse.ArgumentParser(
+            # setting this as True interferes any other rest parsers
+            # showing their help messages :(
+            add_help=False
+        )
         parser.add_argument("name", choices=self.choices)
 
         return parser

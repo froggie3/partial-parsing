@@ -68,7 +68,7 @@ def get_chains(args_ret: list[str], parsers: IParsers):
 
         parsed_success = False
         while not parsed_success:
-            pending, args_ret = curr_parser.parse_known_args(args_after_name)
+            parsed_so_far, args_ret = curr_parser.parse_known_args(args_after_name)
 
             if not args_ret and (  # entire cli arguments were so far consumed
                 help_stack  # -h/--help was specified
@@ -77,7 +77,7 @@ def get_chains(args_ret: list[str], parsers: IParsers):
                 args_after_name.append(help_stack.pop())
             else:
                 # accepted
-                chains.extend(callback(pending))
+                chains.append(callback(parsed_so_far))
                 parsed_success = True
 
     return chains

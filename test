@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+# Demonstration of command-line chaining with argparse
+
+. assert-sh/assert.sh
+poetry shell >/dev/null 2>&1
+
+(
+expected="Helo world!"
+actual=$(printf "Hello woooorld!!\n" | python3 src/partial_parse/main.py uniq) 
+assert_eq "$expected" "$actual" "not equivalent!"
+) &
+
+(
+expected="H=1@e=1@l=2@o=1@ =1@w=1@o=4@r=1@l=1@d=1@!=2" 
+actual=$(printf 'Hello woooorld!!\n' | python3 src/partial_parse/main.py uniq -c) 
+assert_eq "$expected" "$actual" "not equivalent!"
+) &
+
+(
+expected=$(cat <<EOF
+H=1
+e=1
+l=2
+o=1
+ =1
+w=1
+o=4
+r=1
+l=1
+d=1
+!=2
+EOF
+)
+actual=$(printf 'Hello woooorld!!\n' | python3 src/partial_parse/main.py uniq -c tr "@" $'\n')
+assert_eq "$expected" "$actual" "not equivalent!"
+) &
+
+(
+df()
+{
+    cat <<EOF
+Filesystem     1K-blocks     Used Available Use% Mounted on
+tmpfs            2455464     1820   2453644   1% /run
+efivarfs             256       15       242   6% /sys/firmware/efi/efivars
+/dev/sda1       47145992 32499212  14630396  69% /
+tmpfs           12277308      200  12277108   1% /dev/shm
+tmpfs               5120        0      5120   0% /run/lock
+/dev/sda15         99800     6475     93326   7% /boot/efi
+tmpfs            2455460      652   2454808   1% /run/user/1002
+EOF
+}
+
+expected=$(cat <<EOF
+/dev/sda1   47145992  32499212  14630396  69%  /
+tmpfs       12277308  200       12277108  1%   /dev/shm
+tmpfs       2455464   1820      2453644   1%   /run
+tmpfs       2455460   652       2454808   1%   /run/user/1002
+/dev/sda15  99800     6475      93326     7%   /boot/efi
+tmpfs       5120      0         5120      0%   /run/lock
+efivarfs    256       15        242       6%   /sys/firmware/efi/efivars
+EOF
+)
+actual=$(df | awk 'NR!=1{print}' | tr -s ' ' | python3 src/partial_parse/main2.py sort -t' ' -nrk1 | column -t)
+assert_eq "$expected" "$actual" "not equivalent!"
+) &
+
+exit

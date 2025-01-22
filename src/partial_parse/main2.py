@@ -10,7 +10,9 @@ class Parsers(NameParserMixin, IParsers):
 
     @property
     def tac_parser(self):
-        parser = argparse.ArgumentParser(prog="tac", add_help=True)
+        parser = argparse.ArgumentParser(
+            prog="tac", add_help=True, description="Reverse the order of lines."
+        )
 
         def func(namespace):
             params = {"name": "tac", "func": lambda s: list(reversed(s))}
@@ -20,11 +22,26 @@ class Parsers(NameParserMixin, IParsers):
 
     @property
     def sort_parser(self):
-        parser = argparse.ArgumentParser(prog="sort", add_help=True)
-        parser.add_argument("-k", "--key", type=int)
-        parser.add_argument("-n", "--numeric", action="store_true")
-        parser.add_argument("-r", "--reverse", action="store_true")
-        parser.add_argument("-t", "--field-separator")
+        parser = argparse.ArgumentParser(
+            prog="sort",
+            add_help=True,
+            description="Sort lines based on specified criteria.",
+        )
+        parser.add_argument(
+            "-k",
+            "--key",
+            type=int,
+            help="sort by the specified column (starting from 0)",
+        )
+        parser.add_argument(
+            "-n", "--numeric", action="store_true", help="sort numerically"
+        )
+        parser.add_argument(
+            "-r", "--reverse", action="store_true", help="sort in reverse order"
+        )
+        parser.add_argument(
+            "-t", "--field-separator", help="field separator for columns"
+        )
 
         def sortfunc(
             reverse: bool, numeric: bool, separator: str | None, key: int | None = None
@@ -68,6 +85,22 @@ class Parsers(NameParserMixin, IParsers):
 
 
 if __name__ == "__main__":
+    # Handle top-level help before processing chains
+    if len(sys.argv) == 1 or sys.argv[1] in ["-h", "--help"]:
+        print(f"Usage: {sys.argv[0]} COMMAND [ARGS]...\n")
+        print("Available commands:")
+        parsers = Parsers()
+        for cmd in parsers.choices:
+            parser, _ = parsers.get_parser(cmd)
+            description = (
+                parser.description
+                if parser.description
+                else "No description available."
+            )
+            print(f"  {cmd:10} {description}")
+        print(f"\nUse '{sys.argv[0]} COMMAND --help' for command-specific help.")
+        sys.exit(0)
+
     buffer = []
     func_chains = get_chains(sys.argv[1:], Parsers())
 

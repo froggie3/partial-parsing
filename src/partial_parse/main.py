@@ -10,20 +10,28 @@ class Parsers(NameParserMixin, IParsers):
 
     @property
     def tr_parser(self):
-        parser = argparse.ArgumentParser(prog="tr", add_help=True)
-        parser.add_argument("string1")
-        parser.add_argument("string2")
+        parser = argparse.ArgumentParser(
+            prog="tr",
+            add_help=True,
+            description="Translate characters using string replacement.",
+        )
+        parser.add_argument(
+            "string1", help="the string set the character should be replaced."
+        )
+        parser.add_argument(
+            "string2", help="the string set the character to be replaced."
+        )
 
-        def replace(old: str, new: str) -> Callable:
+        def translate(old: str, new: str) -> Callable:
             def inner(original: str) -> str:
-                return original.replace(old, new)
+                return original.translate(str.maketrans(old, new))
 
             return inner
 
         def func(namespace):
             params = {
                 "name": "tr",
-                "func": replace(namespace.string1, namespace.string2),
+                "func": translate(namespace.string1, namespace.string2),
             }
             return params
 
@@ -31,8 +39,14 @@ class Parsers(NameParserMixin, IParsers):
 
     @property
     def uniq_parser(self):
-        parser = argparse.ArgumentParser(prog="uniq", add_help=True)
-        parser.add_argument("-c", "--count", action="store_true")
+        parser = argparse.ArgumentParser(
+            prog="uniq",
+            add_help=True,
+            description="Filter adjacent duplicates with counts.",
+        )
+        parser.add_argument(
+            "-c", "--count", action="store_true", help="show counts of each duplicate"
+        )
 
         def uniq_wrapper(is_count: bool) -> Callable:
             from itertools import groupby
@@ -67,6 +81,22 @@ class Parsers(NameParserMixin, IParsers):
 
 
 if __name__ == "__main__":
+    # Handle top-level help before processing chains
+    if len(sys.argv) == 1 or sys.argv[1] in ["-h", "--help"]:
+        print(f"Usage: {sys.argv[0]} COMMAND [ARGS]...\n")
+        print("Available commands:")
+        parsers = Parsers()
+        for cmd in parsers.choices:
+            parser, _ = parsers.get_parser(cmd)
+            description = (
+                parser.description
+                if parser.description
+                else "No description available."
+            )
+            print(f"  {cmd:10} {description}")
+        print(f"\nUse '{sys.argv[0]} COMMAND --help' for command-specific help.")
+        sys.exit(0)
+
     func_chains = get_chains(sys.argv[1:], Parsers())
     while line := sys.stdin.readline():
         line = line.strip()

@@ -75,4 +75,6 @@ actual=$(python3 src/partial_parse/main.py tr 'l' '1' --help uniq -c)
 assert_eq "$expected" "$actual" "not equivalent!"
 ) &
 
+wait
+
 exit

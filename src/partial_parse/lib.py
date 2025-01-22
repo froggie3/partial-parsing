@@ -63,11 +63,31 @@ def get_chains(args_ret: list[str], parsers: IParsers):
     args_ret, help_stack = _split_help(args_ret)
 
     while args_ret:
-        arg_name, args_after_name = parsers.name_parser.parse_known_args(args_ret)
-        curr_parser, callback = parsers.get_parser(key=arg_name.name)
+        name_parsed_success = False
+        args_after_name = None
+        curr_parser = None
+        callback = None
 
-        parsed_success = False
-        while not parsed_success:
+        while not name_parsed_success:
+            arg_name, args_after_name = parsers.name_parser.parse_known_args(args_ret)
+            curr_parser, callback = parsers.get_parser(key=arg_name.name)
+
+            if not args_after_name and (  # entire cli arguments were so far consumed
+                help_stack  # -h/--help was specified
+            ):
+                # regard "--help" was specified at the end of the cli argument
+                args_ret.append(help_stack.pop())
+                continue
+            # accepted
+            name_parsed_success = True
+
+        if curr_parser is None or args_after_name is None or callback is None:
+            raise Exception("failed to parse an argument")
+
+        arg_parsed_success = False
+        parsed_so_far = None
+
+        while not arg_parsed_success:
             parsed_so_far, args_ret = curr_parser.parse_known_args(args_after_name)
 
             if not args_ret and (  # entire cli arguments were so far consumed
@@ -75,9 +95,11 @@ def get_chains(args_ret: list[str], parsers: IParsers):
             ):
                 # regard "--help" was specified at the end of the cli argument
                 args_after_name.append(help_stack.pop())
-            else:
-                # accepted
-                chains.append(callback(parsed_so_far))
-                parsed_success = True
+                continue
+            # accepted
+            arg_parsed_success = True
+
+        if parsed_so_far is not None:
+            chains.append(callback(parsed_so_far))
 
     return chains

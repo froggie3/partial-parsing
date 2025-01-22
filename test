@@ -37,31 +37,41 @@ assert_eq "$expected" "$actual" "not equivalent!"
 ) &
 
 (
-df()
-{
-    cat <<EOF
-Filesystem     1K-blocks     Used Available Use% Mounted on
-tmpfs            2455464     1820   2453644   1% /run
-efivarfs             256       15       242   6% /sys/firmware/efi/efivars
-/dev/sda1       47145992 32499212  14630396  69% /
-tmpfs           12277308      200  12277108   1% /dev/shm
-tmpfs               5120        0      5120   0% /run/lock
-/dev/sda15         99800     6475     93326   7% /boot/efi
-tmpfs            2455460      652   2454808   1% /run/user/1002
-EOF
-}
-
 expected=$(cat <<EOF
-/dev/sda1   47145992  32499212  14630396  69%  /
-tmpfs       12277308  200       12277108  1%   /dev/shm
-tmpfs       2455464   1820      2453644   1%   /run
-tmpfs       2455460   652       2454808   1%   /run/user/1002
-/dev/sda15  99800     6475      93326     7%   /boot/efi
-tmpfs       5120      0         5120      0%   /run/lock
-efivarfs    256       15        242       6%   /sys/firmware/efi/efivars
+usage: tr [-h] string1 string2
+
+Translate characters using string replacement.
+
+positional arguments:
+  string1     the string set the character should be replaced.
+  string2     the string set the character to be replaced.
+
+options:
+  -h, --help  show this help message and exit
 EOF
 )
-actual=$(df | awk 'NR!=1{print}' | tr -s ' ' | python3 src/partial_parse/main2.py sort -t' ' -nrk1 | column -t)
+actual=$(python3 src/partial_parse/main.py tr --help) 
+assert_eq "$expected" "$actual" "not equivalent!"
+
+actual=$(python3 src/partial_parse/main.py tr a b --help) 
+assert_eq "$expected" "$actual" "not equivalent!"
+) &
+
+(
+expected=$(cat <<EOF
+usage: uniq [-h] [-c]
+
+Filter adjacent duplicates with counts.
+
+options:
+  -h, --help   show this help message and exit
+  -c, --count  show counts of each duplicate
+EOF
+)
+actual=$(python3 src/partial_parse/main.py tr 'l' '1' uniq --help) 
+assert_eq "$expected" "$actual" "not equivalent!"
+
+actual=$(python3 src/partial_parse/main.py tr 'l' '1' --help uniq -c)
 assert_eq "$expected" "$actual" "not equivalent!"
 ) &
 
